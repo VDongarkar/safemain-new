@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafePath AI | Smart Road Monitoring</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #e67e22; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
+        
+        /* Navigation Bar Component */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 10%;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-logo { font-size: 1.6rem; font-weight: bold; color: var(--primary); text-decoration: none; }
+        .nav-logo span { color: var(--accent); }
+        .nav-links { list-style: none; display: flex; gap: 25px; margin: 0; padding: 0; }
+        .nav-links a { text-decoration: none; color: var(--primary); font-weight: 500; transition: 0.3s; }
+        .nav-links a:hover { color: var(--accent); }
+
+        /* Hero Section */
+        .hero { 
+            height: 65vh; 
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=1470'); 
+            background-size: cover; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            color: white; text-align: center; padding: 0 20px;
+        }
+        
+        .hero h1 { font-size: 3.5rem; margin-bottom: 10px; font-weight: 700; }
+        .hero p { font-size: 1.2rem; max-width: 600px; opacity: 0.9; }
+        
+        /* Role Selection Cards */
+        .card-container { display: flex; gap: 25px; margin-top: 40px; flex-wrap: wrap; justify-content: center; }
+        .role-card { 
+            background: white; color: var(--primary); padding: 35px; border-radius: 15px; 
+            width: 260px; cursor: pointer; transition: all 0.3s ease; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center;
+        }
+        .role-card:hover { transform: translateY(-10px); background: var(--accent); color: white; }
+
+        /* Modal Overlay */
+        #loginModal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); z-index: 3000; align-items: center; justify-content: center; 
+            backdrop-filter: blur(5px);
+        }
+        .modal-box { background: white; padding: 45px; border-radius: 20px; width: 360px; text-align: center; }
+        
+        input { width: 100%; padding: 14px; margin: 12px 0; border: 1.5px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        .btn-enter { 
+            width: 100%; padding: 14px; background: var(--accent); color: white; 
+            border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.3s;
+        }
+        .btn-enter:hover { opacity: 0.9; }
+
+        /* Captcha Components styling */
+        .captcha-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+        .captcha-box {
+            background: #e2e8f0;
+            padding: 10px 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            border-radius: 6px;
+            user-select: none;
+            color: var(--primary);
+            border: 1px dashed #cbd5e1;
+        }
+        .btn-refresh {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="#" class="nav-logo">SafePath<span>AI</span></a>
+    <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#" onclick="showLogin('citizen')">Citizen Reporting</a></li>
+        <li><a href="#" onclick="showLogin('admin')">Dashboard</a></li>
+    </ul>
+</nav>
+
+<section class="hero">
+    <h1>SafePath AI</h1>
+    <p>Empowering citizens with AI-driven road safety. Report hazards in real-time and help authorities prioritize repairs.</p>
+    <div class="card-container">
+        <div class="role-card" onclick="showLogin('citizen')">
+            <h3>Citizen Portal</h3>
+            <p>Upload pothole photos and location data.</p>
+        </div>
+        <div class="role-card" onclick="showLogin('admin')">
+            <h3>Authority Dashboard</h3>
+            <p>Manage reports and coordinate repairs.</p>
+        </div>
+    </div>
+</section>
+
+<section id="about" class="section" style="padding: 80px 10%; text-align: center; background: white;">
+    <h2>About SafePath</h2>
+    <p style="line-height: 1.8; color: #666; max-width: 800px; margin: 0 auto;">
+        At SafePath, we believe that no pothole should ever cost a life. Our mission is to bridge the communication gap between the people on the road and the authorities who maintain them. By turning every citizen into a pair of eyes for the city, we ensure that critical road damage is seen, categorized, and fixed—not in weeks, but in real-time.
+    </p>
+</section>
+
+<div id="loginModal">
+    <div class="modal-box">
+        <h2 id="modalTitle">Login</h2>
+        <form onsubmit="handleLogin(event)">
+            <div id="citizenInputs">
+                <input type="text" id="userName" placeholder="Full Name">
+                <input type="tel" id="userPhone" placeholder="Mobile Number">
+                
+                <div class="captcha-container">
+                    <div id="captchaCode" class="captcha-box">LOADING</div>
+                    <button type="button" class="btn-refresh" onclick="generateCaptcha()">Refresh</button>
+                </div>
+                <input type="text" id="captchaInput" placeholder="Enter Captcha Code">
+            </div>
+            <div id="adminInputs" style="display:none">
+                <input type="text" placeholder="Admin Badge ID">
+                <input type="password" placeholder="Access Password">
+            </div>
+            <button type="submit" class="btn-enter">Enter Portal</button>
+            <button type="button" onclick="document.getElementById('loginModal').style.display='none'" 
+                    style="background:none; border:none; margin-top:20px; color:#999; cursor:pointer;">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let activeRole = 'citizen';
+
+    // Generates a random alphanumeric code excluding easily confused characters
+    function generateCaptcha() {
+        const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let result = '';
+        for (let i = 0; i < 5; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        document.getElementById('captchaCode').innerText = result;
+    }
+
+    function showLogin(role) {
+        activeRole = role;
+        document.getElementById('loginModal').style.display = 'flex';
+        document.getElementById('modalTitle').innerText = role === 'admin' ? 'Authority Access' : 'Citizen Reporting';
+        
+        const adminDiv = document.getElementById('adminInputs');
+        const citizenDiv = document.getElementById('citizenInputs');
+        
+        adminDiv.style.display = role === 'admin' ? 'block' : 'none';
+        citizenDiv.style.display = role === 'citizen' ? 'block' : 'none';
+        
+        adminDiv.querySelectorAll('input').forEach(i => i.required = (role === 'admin'));
+        citizenDiv.querySelectorAll('input').forEach(i => i.required = (role === 'citizen'));
+
+        if (role === 'citizen') {
+            generateCaptcha();
+            document.getElementById('captchaInput').value = '';
+        }
+    }
+
+    function handleLogin(e) {
+        e.preventDefault();
+        
+        if (activeRole === 'citizen') {
+            const name = document.getElementById('userName').value.trim();
+            const phone = document.getElementById('userPhone').value.trim();
+            const captchaInput = document.getElementById('captchaInput').value.trim();
+            const correctCaptcha = document.getElementById('captchaCode').innerText;
+
+            if (captchaInput.toUpperCase() !== correctCaptcha) {
+                alert("Incorrect Captcha string entered. Please retry.");
+                generateCaptcha();
+                document.getElementById('captchaInput').value = '';
+                return;
+            }
+
+            localStorage.setItem('safepath_user_name', name);
+            localStorage.setItem('safepath_user_phone', phone);
+            
+            // REDIRECT FIX: Points to Frontend/upload.html relative to your root live server instance
+            window.location.href = 'Frontend/upload.html';
+        } else {
+            // REDIRECT FIX: Points to Frontend/dashboard.html relative to your root live server instance
+            window.location.href = 'Frontend/dashboard.html';
+        }
+    }
+</script>
+
+</body>
+</html>

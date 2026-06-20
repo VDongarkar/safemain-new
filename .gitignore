@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite Database
+safepath.db
+
+# User Uploaded Temp & Final Images
+static/uploads/temp_*
+static/uploads/processed_*
+static/uploads/*.jpg
+static/uploads/*.png
+static/uploads/*.jpeg
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+prediction_result.png

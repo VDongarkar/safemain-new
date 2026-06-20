@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Admin Dashboard - SafePath</title>
+    <link rel="stylesheet" href="style/dashboard.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        :root { 
+            --primary: #2c3e50; 
+            --accent: #e67e22; 
+            --bg: #f8f9fa; 
+            --success: #28a745; 
+            --card-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: #333; }
+        
+        /* Site Header Styling */
+        .site-header .container { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 90%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 12px 0; 
+        }
+        
+        .logout-admin { 
+            background: #e74c3c; 
+            color: white !important; 
+            text-decoration: none; 
+            padding: 8px 18px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            font-size: 0.9rem; 
+            transition: 0.3s; 
+        }
+        .logout-admin:hover { 
+            background: #c0392b; 
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); 
+        }
+
+        /* Modern Grid Layout Wrapper - Map and list side by side */
+        .dash-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 25px;
+            margin-top: 25px;
+            width: 100%;
+        }
+        @media (max-width: 1024px) {
+            .dash-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Section Titles */
+        h3 { 
+            color: var(--primary); 
+            font-size: 1.3rem; 
+            margin-top: 0; 
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        /* Clean Header Panel alignment */
+        .manage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .manage-header h3 { margin: 0; border: none; padding: 0; }
+        .filters { display: flex; align-items: center; gap: 10px; }
+
+        /* Professional Search Panel Modifiers */
+        .search-input {
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            width: 200px;
+            outline: none;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+        .search-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.2);
+        }
+        .btn-reset {
+            background: #718096;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .btn-reset:hover { background: #4a5568; }
+
+        /* Clean Card List Controls */
+        .report-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 460px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .report-item { 
+            display: flex; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            box-shadow: var(--card-shadow);
+            border: 1px solid #e2e8f0;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .report-left { display: flex; align-items: center; gap: 15px; flex: 1; }
+        .pothole-img-preview { 
+            width: 125px; 
+            height: 90px; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            border: 1px solid #e2e8f0;
+            transition: 0.2s;
+        }
+        .pothole-img-preview:hover { transform: scale(1.03); }
+        
+        .report-info h4 { margin: 0 0 5px 0; font-size: 1.1rem; color: var(--primary); }
+        .report-details { font-size: 0.85rem; color: #4a5568; line-height: 1.45; }
+        
+        .gmaps-link { color: #3498db; text-decoration: none; font-weight: 500; }
+        .gmaps-link:hover { text-decoration: underline; }
+
+        .report-right { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-end; 
+            gap: 8px; 
+            min-width: 140px;
+        }
+        .fixed-badge { color: #155724; font-weight: bold; background: #d4edda; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; }
+        .pending-badge { color: #721c24; font-weight: bold; background: #f8d7da; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; }
+        
+        .severity-tag { font-weight: 500; font-size: 0.85rem; color: #4a5568; }
+        
+        .btn-repair { 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 0.85rem;
+            transition: 0.2s; 
+        }
+        .btn-repair:hover { background: #218838; }
+
+        /* Bottom Horizontal Statistics Container */
+        .admin-stats { 
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px; 
+            margin-top: 30px; 
+            width: 100%;
+            clear: both;
+        }
+        @media (max-width: 768px) {
+            .admin-stats { grid-template-columns: 1fr; }
+        }
+        .stat-card-small { 
+            background: #fff; 
+            padding: 15px 25px; 
+            border-radius: 10px; 
+            box-shadow: var(--card-shadow); 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center; 
+            border-left: 5px solid #ccc;
+        }
+        .stat-card-small span { color: #666; font-size: 0.95rem; font-weight: bold; }
+        .stat-card-small h3 { margin: 0; font-size: 1.6rem; border: none; padding: 0; font-weight: 700; }
+    </style>
+</head>
+<body>
+<header class="site-header" style="background: #2c3e50; color: white; padding: 5px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+  <div class="container">
+    <h1 style="margin: 0; font-size: 1.5rem;">SafePath — Authority Portal</h1>
+    <nav>
+        <a href="../index.html" class="logout-admin">Logout Admin</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container dash" style="max-width: 1250px; margin: 30px auto; padding: 0 20px; display: flex; flex-direction: column;">
+  
+  <div class="dash-grid">
+      <section class="dash-map">
+        <h3>Live Municipal Pothole Map</h3>
+        <div id="dashMap" style="height: 460px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #e2e8f0;"></div>
+      </section>
+
+      <section class="dash-list">
+        <div class="manage-header">
+            <h3>Manage Repair Works</h3>
+            <div class="filters">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search area or reporter..." onkeyup="handleFilterSearch(this.value)">
+                <button onclick="window.location.reload()" class="btn-reset">Reset View</button>
+                <button onclick="clearSystemData()" style="background: #e74c3c; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: 0.2s;">🧹 Clear DB</button>
+            </div>
+        </div>
+        <div id="reports" class="report-list">Loading aggregate data infrastructure...</div>
+      </section>
+  </div>
+
+  <div class="admin-stats">
+      <div class="stat-card-small" style="border-left-color: #3498db;">
+          <span>Total Logged:</span>
+          <h3 id="totalReports" style="color: #2c3e50;">0</h3>
+      </div>
+      
+      <div class="stat-card-small" style="border-left-color: #e74c3c;">
+          <span>High Severity:</span>
+          <h3 id="highSeverity" style="color: #e74c3c;">0</h3>
+      </div>
+      
+      <div class="stat-card-small" style="border-left-color: #28a745;">
+          <span>Resolved Logs:</span>
+          <h3 id="resolvedReports" style="color: #28a745;">0</h3>
+      </div>
+  </div>
+
+</main>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    const API_BASE = "http://127.0.0.1:5000";
+    let dashMap, markerGroup;
+    let masterReportsData = [];
+
+    function initAdminMap() {
+        dashMap = L.map('dashMap').setView([18.6438, 73.7554], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(dashMap);
+        markerGroup = L.layerGroup().addTo(dashMap);
+    }
+
+    function fetchAllReports() {
+        fetch(`${API_BASE}/api/reports/all`)
+            .then(res => res.json())
+            .then(response => {
+                if (response.status === 'success') {
+                    masterReportsData = response.data;
+                    renderAdminDashboard(masterReportsData);
+                }
+            })
+            .catch(err => console.error("Database parsing failure: ", err));
+    }
+
+    function renderAdminDashboard(data) {
+        const reportsContainer = document.getElementById('reports');
+        markerGroup.clearLayers();
+
+        document.getElementById('totalReports').innerText = data.length;
+        document.getElementById('highSeverity').innerText = data.filter(i => i.severity === 'High').length;
+        document.getElementById('resolvedReports').innerText = data.filter(i => i.status === 'Repaired' || i.status === 'Fixed').length;
+
+        if (data.length === 0) {
+            reportsContainer.innerHTML = "<p>No active reports found in the municipal database table.</p>";
+            return;
+        }
+
+        reportsContainer.innerHTML = data.map(report => {
+            const markerColor = report.severity === 'High' ? 'red' : report.severity === 'Medium' ? 'orange' : 'green';
+            const htmlIcon = `<div style="background-color:${markerColor}; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 4px rgba(0,0,0,0.4);"></div>`;
+            
+            const marker = L.marker([report.latitude, report.longitude], {
+                icon: L.divIcon({ html: htmlIcon, className: 'custom-pin', iconSize: [12, 12] })
+            });
+            
+            marker.bindPopup(`<b>${report.area}</b><br>Severity: ${report.severity}<br>Status: ${report.status}`);
+            markerGroup.addLayer(marker);
+
+            const isFixed = report.status === 'Repaired' || report.status === 'Fixed';
+
+            return `
+                <div class="report-item">
+                    <div class="report-left">
+                        <a href="${API_BASE}${report.image_url}" target="_blank">
+                            <img class="pothole-img-preview" src="${API_BASE}${report.image_url}" title="Click to view full bounding box layout">
+                        </a>
+                        <div class="report-info">
+                            <h4>${report.area}</h4>
+                            <div class="report-details">
+                                👤 <b>Reporter:</b> ${report.reporter_name} (${report.reporter_phone})<br>
+                                📅 <b>Logged:</b> ${report.timestamp} <br>
+                                📍 <b>Geomarkers:</b> <a class="gmaps-link" href="https://www.google.com/maps/search/?api=1&query=${report.latitude},${report.longitude}" target="_blank">View on Map</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-right">
+                        <div>
+                            <span class="${isFixed ? 'fixed-badge' : 'pending-badge'}">${report.status.toUpperCase()}</span>
+                        </div>
+                        <div class="severity-tag">
+                            Severity: <span style="font-weight:bold; color:${report.severity==='High'?'#e74c3c':report.severity==='Medium'?'#e67e22':'#28a745'}">${report.severity.toUpperCase()}</span>
+                        </div>
+                        ${!isFixed ? `
+                            <button class="btn-repair" onclick="dispatchRepairStatus(${report.id})">✅ Mark Fixed</button>
+                        ` : '<span style="color:#718096; font-size:0.85rem; font-weight:500;">✔ Closed Log</span>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function handleFilterSearch(query) {
+        const lowerCaseQuery = query.toLowerCase();
+        const filtered = masterReportsData.filter(item => 
+            item.area.toLowerCase().includes(lowerCaseQuery) || 
+            item.reporter_name.toLowerCase().includes(lowerCaseQuery) ||
+            item.reporter_phone.includes(lowerCaseQuery)
+        );
+        renderAdminDashboard(filtered);
+    }
+
+    function dispatchRepairStatus(id) {
+        if (!confirm("Confirm status conversion to Repaired? This will log an automated notification packet on the server.")) return;
+
+        // FIX: Sends 'Fixed' status keyword payload structure to perfectly sync status criteria mappings
+        fetch(`${API_BASE}/api/reports/update-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, status: 'Fixed' })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("HTTP error " + res.status);
+            return res.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                alert("Database state closed successfully!");
+                fetchAllReports();
+            } else {
+                alert("Execution error: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error("Error during status update: ", err);
+            alert("Communication terminal network crash. Check if Flask backend server terminal is running.");
+        });
+    }
+
+    function clearSystemData() {
+        if (!confirm("🚨 WARNING: Are you sure you want to completely clear all testing data from the database? This cannot be undone.")) return;
+
+        fetch(`${API_BASE}/api/reports/reset-database`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                window.location.reload(); 
+            } else {
+                alert("Error resetting database: " + data.message);
+            }
+        })
+        .catch(err => alert("Communication terminal network crash. See logs."));
+    }
+
+    window.addEventListener('load', function() {
+        initAdminMap();
+        fetchAllReports();
+    });
+</script>
+</body>
+</html>

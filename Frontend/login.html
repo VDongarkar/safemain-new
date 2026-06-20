@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Login - SafePath</title>
+    <link rel="stylesheet" href="style/main.css">
+</head>
+<body>
+<header class="mini-header"><a href="index.html">← Back to Role Selection</a></header>
+<main class="container">
+  <div class="form-card">
+    <h2 id="loginTitle">Login</h2>
+    <form id="loginForm">
+      <input type="email" placeholder="Email" required />
+      <input type="password" placeholder="Password" required />
+      <button class="btn" type="submit">Login</button>
+    </form>
+    <p id="registerText">No account? <a href="register.html">Sign up</a></p>
+  </div>
+</main>
+
+<script>
+    // 1. Detect the role from the URL (e.g., login.html?role=user)
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get('role') || 'user'; 
+    
+    const loginTitle = document.getElementById('loginTitle');
+    const registerText = document.getElementById('registerText');
+
+    // 2. Customize UI based on role
+    if (role === 'admin') {
+        loginTitle.innerText = "Authority Login";
+        registerText.style.display = "none"; // Authorities usually don't "sign up" on the web
+    } else {
+        loginTitle.innerText = "Citizen Login";
+    }
+
+    // 3. Login Redirect Logic
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        // For your presentation, we accept any login and redirect based on role
+        if (role === 'admin') {
+            window.location.href = "dashboard.html";
+        } else {
+            window.location.href = "upload.html";
+        }
+    });
+</script>
+</body>
+</html>

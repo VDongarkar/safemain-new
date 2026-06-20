@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Register - SafePath</title>
+    <link rel="stylesheet" href="style/main.css">
+</head>
+<body>
+<header class="mini-header"><a href="index.html">← Home</a></header>
+<main class="container">
+  <div class="form-card">
+    <h2>Citizen Registration</h2>
+    <p class="muted">Create an account to report potholes.</p>
+    
+    <form id="registerForm">
+      <input type="text" id="regName" placeholder="Full Name" required />
+      <input type="email" id="regEmail" placeholder="Email" required />
+      <input type="password" id="regPassword" placeholder="Password" required />
+      <input type="password" id="regConfirm" placeholder="Confirm Password" required />
+      <button class="btn" type="submit">Create Account</button>
+    </form>
+    
+    <p>Already have an account? <a href="login.html?role=user">Login here</a></p>
+  </div>
+</main>
+
+<script>
+    document.getElementById('registerForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const password = document.getElementById('regPassword').value;
+        const confirm = document.getElementById('regConfirm').value;
+
+        if (password !== confirm) {
+            alert("Passwords do not match!");
+            return;
+        }
+
+        // For your demo: Save "mock" user data to localStorage
+        const userData = {
+            name: document.getElementById('regName').value,
+            email: document.getElementById('regEmail').value,
+            role: 'user'
+        };
+        
+        localStorage.setItem('safepath_user', JSON.stringify(userData));
+        
+        alert("Registration Successful! Please login.");
+        // Redirect to login page specifically for users
+        window.location.href = "login.html?role=user";
+    });
+</script>
+</body>
+</html>
